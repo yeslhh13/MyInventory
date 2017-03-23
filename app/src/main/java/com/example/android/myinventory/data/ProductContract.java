@@ -80,5 +80,11 @@ public final class ProductContract {
          * Type: INTEGER
          */
         public final static String COLUMN_PRODUCT_QUANTITY = "quantity";
+        /**
+         * Picture of the product
+         * <p>
+         * Type: BLOB
+         */
+        public final static String COLUMN_PRODUCT_PICTURE = "picture";
     }
 }

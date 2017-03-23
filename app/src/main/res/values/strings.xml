@@ -7,6 +7,7 @@
     <string name="action_delete_all_entries">Delete all products</string>
     <string name="action_order">Order</string>
     <string name="action_sale">Track Sale</string>
+    <string name="action_take_picture">Take a Picture</string>
 
     <string name="editor_activity_title_new_product">Add a Product</string>
     <string name="editor_activity_title_edit_product">Edit Product</string>
@@ -21,6 +22,7 @@
     <string name="editor_delete_product_successful">Deleted product successfully</string>
 
     <string name="image_view_description">ImageView to show empty state</string>
+    <string name="product_image_view_description">ImageView to show product picture</string>
 
     <string name="empty_view_title_text">No products here!</string>
     <string name="empty_view_subtitle_text">Get started by adding a product</string>
@@ -31,10 +33,12 @@
 
     <string name="hint_product_name">Name</string>
     <string name="hint_product_price">Price</string>
+    <string name="hint_product_quantity">Quantity</string>
 
     <string name="unit_product_price">$</string>
 
     <string name="toast_invalid_button_value">Invalid value inserted</string>
+    <string name="toast_invalid_product_info">Please, insert all required item information</string>
 
     <string name="delete_dialog_message">Delete this product?</string>
     <string name="delete">Delete</string>
@@ -44,5 +48,9 @@
     <string name="discard">Discard</string>
     <string name="keep_editing">Keep Editing</string>
 
-    <string name="cannot_sale">There is no more product.</string>
+    <string name="order_summary_email_subject">Product order form</string>
+    <string name="order_summary_name">Product Name: </string>
+    <string name="order_summary_price">Price: $ </string>
+    <string name="order_summary_quantity">Quantity: </string>
+    <string name="order_summary_total">Total: $ </string>
 </resources>

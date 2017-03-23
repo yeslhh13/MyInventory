@@ -6,8 +6,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AlertDialog;
@@ -20,10 +25,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.android.myinventory.data.ProductContract;
+
+import java.io.ByteArrayOutputStream;
 
 /**
  * Created by Kat on 2017-03-22.
@@ -32,7 +39,7 @@ import com.example.android.myinventory.data.ProductContract;
 /**
  * Allows user to create a new product or edit an existing one
  */
-public class EditorActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+public class EditorActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>, View.OnClickListener {
     /**
      * Identifier for the product data loader
      */
@@ -52,25 +59,33 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
      */
     private EditText mPriceEditText;
     /**
-     * TextView field to show the product's quantity
+     * EditText field to show the product's quantity
      */
-    private TextView mQuantityTextView;
+    private EditText mQuantityEditText;
     /**
-     * Button field to increase the product's quantity
+     * ImageView filed to show the product's picture
      */
-    private Button mSaleButton;
+    private ImageView mImageView;
     /**
-     * Button field to decrease the product's quantity
+     * Button field to take a product's picture by the camera application
      */
-    private Button mOrderButton;
+    private Button mTakePictureButton;
 
     /**
      * Boolean flag that keeps track of whether the product has been edited(true) or not(false)
      */
     private boolean mProductHasChanged = false;
 
-    private static final int SALE_BUTTON = 0;
-    private static final int ORDER_BUTTON = 1;
+    /**
+     * Identifier to use when getting an image
+     */
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
+
+    /**
+     * Byte array to save the image data
+     */
+    private byte[] imageData;
+
 
     /**
      * OnTouchListener that listens for any user touches on a View, implying that they are modifying the view
@@ -93,7 +108,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
          * Examine the intent that was used to launch this activity
          * in order to figure out if we're creating a new one or editing an existing one
          */
-        Intent intent = getIntent();
+        final Intent intent = getIntent();
         mCurrentUri = intent.getData();
 
         /**
@@ -124,12 +139,11 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
          */
         mNameEditText = (EditText) findViewById(R.id.edit_product_name);
         mPriceEditText = (EditText) findViewById(R.id.edit_product_price);
-        mQuantityTextView = (TextView) findViewById(R.id.show_product_quantity);
-        mSaleButton = (Button) findViewById(R.id.button_sale_product);
-        mOrderButton = (Button) findViewById(R.id.button_order_product);
+        mQuantityEditText = (EditText) findViewById(R.id.show_product_quantity);
+        mImageView = (ImageView) findViewById(R.id.image_view_product_image);
+        mTakePictureButton = (Button) findViewById(R.id.edit_product_take_picture);
 
-        mSaleButton.setVisibility(View.GONE);
-        mOrderButton.setVisibility(View.GONE);
+        mTakePictureButton.setOnClickListener(this);
 
         /**
          * Setup OnTouchListeners on all input field, so we can determine if the user has touched or modified them
@@ -137,58 +151,40 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
          */
         mNameEditText.setOnTouchListener(mTouchListener);
         mPriceEditText.setOnTouchListener(mTouchListener);
-
-        if (mCurrentUri != null) {
-            /**
-             * Show sale button and order button only when the product already exists
-             */
-            mSaleButton.setVisibility(View.VISIBLE);
-            mOrderButton.setVisibility(View.VISIBLE);
-
-            mSaleButton.setOnTouchListener(mTouchListener);
-            mOrderButton.setOnTouchListener(mTouchListener);
-
-            mSaleButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    saleOrOrder(SALE_BUTTON);
-                }
-            });
-
-            mOrderButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    saleOrOrder(ORDER_BUTTON);
-                }
-            });
-        }
+        mQuantityEditText.setOnTouchListener(mTouchListener);
+        mTakePictureButton.setOnTouchListener(mTouchListener);
     }
 
     /**
-     * Increase or decrease the quantity value of the product by knowing what button has been pressed
+     * Order the product when menu item "Order" is clicked
      */
-    private void saleOrOrder(int saleOrOrder) {
-        /**
-         * Create and initialize the quantity value
-         */
-        int quantity = 0;
+    private void orderProduct() {
+        Intent intent = new Intent(Intent.ACTION_SENDTO);
+        intent.setData(Uri.parse("mailto:"));
 
-        /**
-         * If {@link #saleOrOrder(int)} is {@link #SALE_BUTTON}, decrease the quantity value
-         * If {@link #saleOrOrder(int)} is {@link #ORDER_BUTTON}, increase the quantity value
-         */
-        if (saleOrOrder == SALE_BUTTON) {
-            if (Integer.parseInt(mQuantityTextView.getText().toString().trim()) == 0) {
-                Toast.makeText(this, getString(R.string.cannot_sale), Toast.LENGTH_SHORT).show();
-                return;
-            } else
-                quantity = Integer.parseInt(mQuantityTextView.getText().toString().trim()) - 1;
-        } else if (saleOrOrder == ORDER_BUTTON)
-            quantity = Integer.parseInt(mQuantityTextView.getText().toString().trim()) + 1;
-        else
-            Toast.makeText(this, getString(R.string.toast_invalid_button_value), Toast.LENGTH_SHORT).show();
+        String name = mNameEditText.getText().toString().trim();
+        int price = Integer.parseInt(mPriceEditText.getText().toString().trim());
+        int quantity = Integer.parseInt(mQuantityEditText.getText().toString().trim());
 
-        mQuantityTextView.setText(String.valueOf(quantity));
+        intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.order_summary_email_subject));
+        intent.putExtra(Intent.EXTRA_TEXT, createOrderSummary(name, price, quantity));
+
+        if (intent.resolveActivity(getPackageManager()) != null)
+            startActivity(intent);
+    }
+
+    /**
+     * Create summary of the order
+     *
+     * @param productName name of the product to be ordered
+     * @param price       of the product
+     * @param quantity    of the product to be ordered
+     * @return text summary
+     */
+    private String createOrderSummary(String productName, int price, int quantity) {
+        return getString(R.string.order_summary_name) + productName + "\n" + getString(R.string.order_summary_price)
+                + price + "\n" + getString(R.string.order_summary_quantity) + quantity + "\n"
+                + getString(R.string.order_summary_total) + price * quantity + "\n";
     }
 
     /**
@@ -205,8 +201,11 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         /**
          * Check if this is supposed to be a new pet and check if all fields are blank
          */
-        if (mCurrentUri == null && TextUtils.isEmpty(nameString) && TextUtils.isEmpty(priceString))
+        if (mCurrentUri == null && TextUtils.isEmpty(nameString) || TextUtils.isEmpty(priceString)
+                || imageData == null) {
+            Toast.makeText(this, getString(R.string.toast_invalid_product_info), Toast.LENGTH_SHORT).show();
             return;
+        }
 
         /**
          * Create a {@link ContentValues} object where column names are the keys and product attributes from the editor are the values
@@ -219,10 +218,11 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
          * If the quantity 0(new product), don't try to parse the string into an integer value, just use 0 by default.
          */
         int quantity = 0;
-        if (!mQuantityTextView.getText().toString().trim().equals(""))
-            quantity = Integer.parseInt(mQuantityTextView.getText().toString().trim());
+        if (!mQuantityEditText.getText().toString().trim().equals(""))
+            quantity = Integer.parseInt(mQuantityEditText.getText().toString().trim());
 
         values.put(ProductContract.ProductEntry.COLUMN_PRODUCT_QUANTITY, quantity);
+        values.put(ProductContract.ProductEntry.COLUMN_PRODUCT_PICTURE, imageData);
 
         /**
          * Determine if this is a new or existing product by checking if {@link #mCurrentUri} is null or not
@@ -282,10 +282,12 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         super.onPrepareOptionsMenu(menu);
 
         /**
-         * If this is a new product, hide the "Delete" menu item
+         * If this is a new product, hide the "Delete" and "Order" menu item
          */
         if (mCurrentUri == null) {
             MenuItem menuItem = menu.findItem(R.id.action_delete);
+            menuItem.setVisible(false);
+            menuItem = menu.findItem(R.id.action_order);
             menuItem.setVisible(false);
         }
 
@@ -307,6 +309,12 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                  * Exit activity
                  */
                 finish();
+                return true;
+            case R.id.action_order:
+                /**
+                 * Order the product by sending an e-mail to the supplier
+                 */
+                orderProduct();
                 return true;
             case R.id.action_delete:
                 /**
@@ -377,7 +385,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
          * Define a projection that contains all columns from the product table
          */
         String[] projection = {ProductContract.ProductEntry._ID, ProductContract.ProductEntry.COLUMN_PRODUCT_NAME,
-                ProductContract.ProductEntry.COLUMN_PRODUCT_PRICE, ProductContract.ProductEntry.COLUMN_PRODUCT_QUANTITY};
+                ProductContract.ProductEntry.COLUMN_PRODUCT_PRICE, ProductContract.ProductEntry.COLUMN_PRODUCT_QUANTITY,
+                ProductContract.ProductEntry.COLUMN_PRODUCT_PICTURE};
 
         /**
          * This loader will execute the {@link android.content.ContentProvider}'s query method on a background thread
@@ -403,13 +412,15 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             int nameColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_PRODUCT_NAME);
             int priceColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_PRODUCT_PRICE);
             int quantityColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_PRODUCT_QUANTITY);
+            int imageColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_PRODUCT_PICTURE);
 
             /**
              * Extract out the value from the Cursor and update the views on the screen with the values from the db
              */
             mNameEditText.setText(data.getString(nameColumnIndex));
-            mPriceEditText.setText(data.getString(priceColumnIndex));
-            mQuantityTextView.setText(data.getString(quantityColumnIndex));
+            mPriceEditText.setText(String.valueOf(data.getInt(priceColumnIndex)));
+            mQuantityEditText.setText(String.valueOf(data.getInt(quantityColumnIndex)));
+            mImageView.setImageBitmap(getBitmap(data.getBlob(imageColumnIndex)));
         }
     }
 
@@ -420,7 +431,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
          */
         mNameEditText.setText("");
         mPriceEditText.setText("");
-        mQuantityTextView.setText("0");
+        mQuantityEditText.setText("0");
+        mImageView.setImageDrawable(null);
     }
 
     /**
@@ -504,5 +516,55 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
          */
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.edit_product_take_picture) {
+            /**
+             * Take a new picture of the product
+             */
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_IMAGE_CAPTURE) {
+            /**
+             * Taking a picture with a camera
+             */
+            try {
+                Bitmap image_bitmap = (Bitmap) data.getExtras().get("data");
+                mImageView.setImageBitmap(image_bitmap);
+                mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+                setImageData(image_bitmap);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Change the Drawable to byte[] and save it to {@link #imageData}
+     */
+    public void setImageData(Bitmap bitmap) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+
+        imageData = stream.toByteArray();
+    }
+
+    /**
+     * Decode byte[] from db
+     *
+     * @return Bitmap to set the image
+     */
+    public Bitmap getBitmap(byte[] b) {
+        return BitmapFactory.decodeByteArray(b, 0, b.length);
     }
 }

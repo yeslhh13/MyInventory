@@ -10,6 +10,10 @@ import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.sql.Blob;
+
+import static com.example.android.myinventory.R.id.price;
+
 /**
  * Created by Kat on 2017-03-22.
  */
@@ -170,6 +174,13 @@ public class ProductProvider extends ContentProvider {
             throw new IllegalArgumentException("Product requires valid price");
 
         /**
+         * Check that the picture is valid
+         */
+        byte[] picture = values.getAsByteArray(ProductContract.ProductEntry.COLUMN_PRODUCT_PICTURE);
+        if (picture == null)
+            throw new IllegalArgumentException("Product requires valid picture");
+
+        /**
          * Get the writable db
          */
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
@@ -294,6 +305,16 @@ public class ProductProvider extends ContentProvider {
             Integer price = values.getAsInteger(ProductContract.ProductEntry.COLUMN_PRODUCT_PRICE);
             if (price != null && price < 0)
                 throw new IllegalArgumentException("Product requires valid price");
+        }
+
+        /**
+         * If the {@link com.example.android.myinventory.data.ProductContract.ProductEntry#COLUMN_PRODUCT_PICTURE} key is present,
+         * check that the picture value is valid
+         */
+        if (values.containsKey(ProductContract.ProductEntry.COLUMN_PRODUCT_PICTURE)) {
+            byte[] picture = values.getAsByteArray(ProductContract.ProductEntry.COLUMN_PRODUCT_PICTURE);
+            if (picture == null)
+                throw new IllegalArgumentException("Product requires valid picture");
         }
 
         /**
