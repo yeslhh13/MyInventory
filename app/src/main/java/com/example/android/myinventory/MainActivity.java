@@ -1,13 +1,18 @@
 package com.example.android.myinventory;
 
+import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -15,7 +20,6 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -34,10 +38,14 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
      */
     ProductCursorAdapter mCursorAdapter;
 
+    private final int MY_PERMISSION_REQUEST = 100;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        checkPermission();
 
         /**
          * Setup FAB to open {@link EditorActivity}
@@ -162,5 +170,20 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
          * Callback called when the data needs to be deleted
          */
         mCursorAdapter.swapCursor(null);
+    }
+
+    /**
+     * Check permission
+     */
+    @TargetApi(Build.VERSION_CODES.M)
+    private void checkPermission() {
+        if (checkSelfPermission((Manifest.permission.WRITE_EXTERNAL_STORAGE)) != PackageManager.PERMISSION_GRANTED ||
+                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}
+                    , MY_PERMISSION_REQUEST);
+        } else {
+            finishActivity(0);
+        }
     }
 }

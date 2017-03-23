@@ -1,18 +1,23 @@
 package com.example.android.myinventory;
 
+import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.ContentValues;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AlertDialog;
@@ -31,6 +36,8 @@ import android.widget.Toast;
 import com.example.android.myinventory.data.ProductContract;
 
 import java.io.ByteArrayOutputStream;
+
+import static android.R.attr.data;
 
 /**
  * Created by Kat on 2017-03-22.
@@ -86,6 +93,9 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
      */
     private byte[] imageData;
 
+    private final int MY_PERMISSION_REQUEST = 100;
+
+    private boolean permissionCheckedForCamera;
 
     /**
      * OnTouchListener that listens for any user touches on a View, implying that they are modifying the view
@@ -237,11 +247,18 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
              * There was an error with insertion
              */
                 Toast.makeText(this, getString(R.string.editor_insert_product_failed), Toast.LENGTH_SHORT).show();
-            else
-            /**
-             * Otherwise, the insertion was successful
-             */
+            else {
+                /**
+                 * Otherwise, the insertion was successful
+                 */
                 Toast.makeText(this, getString(R.string.editor_insert_product_successful), Toast.LENGTH_SHORT).show();
+
+                /**
+                 * Exit activity
+                 */
+                finish();
+                NavUtils.navigateUpFromSameTask(EditorActivity.this);
+            }
         } else {
             /**
              * This is an existing product, so update the product with content URI: {@link #mCurrentUri}
@@ -259,10 +276,12 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                  * Otherwise, the update was successful
                  */
                 Toast.makeText(this, getString(R.string.editor_update_product_successful), Toast.LENGTH_SHORT).show();
+
                 /**
                  * Exit activity
                  */
                 finish();
+                NavUtils.navigateUpFromSameTask(EditorActivity.this);
             }
         }
     }
@@ -526,9 +545,14 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         if (v.getId() == R.id.edit_product_take_picture) {
             /**
              * Take a new picture of the product
+             * But before that, we must check the permission of the CAMERA
              */
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+            checkPermission();
+
+            if (permissionCheckedForCamera) {
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+            }
         }
     }
 
@@ -569,5 +593,47 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
      */
     public Bitmap getBitmap(byte[] b) {
         return BitmapFactory.decodeByteArray(b, 0, b.length);
+    }
+
+
+    /**
+     * Check permission
+     */
+    @TargetApi(Build.VERSION_CODES.M)
+    private void checkPermission() {
+        if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
+            permissionCheckedForCamera = true;
+        else
+            permissionCheckedForCamera = false;
+
+        if (checkSelfPermission((Manifest.permission.WRITE_EXTERNAL_STORAGE)) != PackageManager.PERMISSION_GRANTED ||
+                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}
+                    , MY_PERMISSION_REQUEST);
+        } else {
+            finishActivity(0);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == MY_PERMISSION_REQUEST) {
+            if (grantResults[1] != PackageManager.PERMISSION_GRANTED) {
+                permissionCheckedForCamera = false;
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this).setMessage(getString(R.string.permission_camera))
+                        .setNeutralButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+
+                builder.create().show();
+            } else {
+                permissionCheckedForCamera = true;
+            }
+        }
     }
 }
