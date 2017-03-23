@@ -37,8 +37,6 @@ import com.example.android.myinventory.data.ProductContract;
 
 import java.io.ByteArrayOutputStream;
 
-import static android.R.attr.data;
-
 /**
  * Created by Kat on 2017-03-22.
  */

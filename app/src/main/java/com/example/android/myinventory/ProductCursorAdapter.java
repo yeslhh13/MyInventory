@@ -15,8 +15,6 @@ import android.widget.Toast;
 import com.example.android.myinventory.data.ProductContract;
 import com.example.android.myinventory.data.ProductDBHelper;
 
-import static com.example.android.myinventory.R.id.quantity;
-
 /**
  * Created by Kat on 2017-03-22.
  */
@@ -65,7 +63,7 @@ public class ProductCursorAdapter extends CursorAdapter {
          */
         TextView nameTextView = (TextView) view.findViewById(R.id.name);
         TextView priceTextView = (TextView) view.findViewById(R.id.price);
-        final TextView quantityTextView = (TextView) view.findViewById(quantity);
+        final TextView quantityTextView = (TextView) view.findViewById(R.id.quantity);
         Button saleButton = (Button) view.findViewById(R.id.sale_button);
 
         /**

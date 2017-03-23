@@ -3,7 +3,6 @@ package com.example.android.myinventory.data;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.graphics.Bitmap;
 
 import java.io.File;
 
