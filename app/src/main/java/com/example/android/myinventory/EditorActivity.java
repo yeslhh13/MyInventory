@@ -597,7 +597,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     /**
      * Check permission
      */
-    @TargetApi(Build.VERSION_CODES.M)
+    @TargetApi(Build.VERSION_CODES.N)
     private void checkPermission() {
         if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
             permissionCheckedForCamera = true;
