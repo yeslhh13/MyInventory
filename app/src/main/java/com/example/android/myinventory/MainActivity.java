@@ -5,6 +5,7 @@ import android.annotation.TargetApi;
 import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.pm.PackageManager;
@@ -14,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -115,8 +117,21 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
      * Helper method to delete all products in the db
      */
     private void deleteAllProducts() {
-        int rowsDeleted = getContentResolver().delete(ProductContract.ProductEntry.CONTENT_URI, null, null);
-        Log.v("MainActivity", rowsDeleted + " rows deleted from product db");
+        AlertDialog.Builder builder = new AlertDialog.Builder(this).setMessage(getString(R.string.delete_all_dialog_message))
+                .setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                }).setPositiveButton(getString(R.string.delete), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        int rowsDeleted = getContentResolver().delete(ProductContract.ProductEntry.CONTENT_URI, null, null);
+                        Log.v("MainActivity", rowsDeleted + " rows deleted from product db");
+                    }
+                });
+
+        builder.create().show();
     }
 
     @Override

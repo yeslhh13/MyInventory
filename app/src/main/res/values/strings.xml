@@ -41,6 +41,7 @@
     <string name="toast_invalid_product_info">Please, insert all required item information</string>
 
     <string name="delete_dialog_message">Delete this product?</string>
+    <string name="delete_all_dialog_message">Delete all the products?</string>
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
