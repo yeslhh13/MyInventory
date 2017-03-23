@@ -414,13 +414,15 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             int quantityColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_PRODUCT_QUANTITY);
             int imageColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_PRODUCT_PICTURE);
 
+            imageData = data.getBlob(imageColumnIndex);
+
             /**
              * Extract out the value from the Cursor and update the views on the screen with the values from the db
              */
             mNameEditText.setText(data.getString(nameColumnIndex));
             mPriceEditText.setText(String.valueOf(data.getInt(priceColumnIndex)));
             mQuantityEditText.setText(String.valueOf(data.getInt(quantityColumnIndex)));
-            mImageView.setImageBitmap(getBitmap(data.getBlob(imageColumnIndex)));
+            mImageView.setImageBitmap(getBitmap(imageData));
         }
     }
 
