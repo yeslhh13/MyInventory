@@ -254,11 +254,16 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
              * There was an error with updating
              */
                 Toast.makeText(this, getString(R.string.editor_update_product_failed), Toast.LENGTH_SHORT).show();
-            else
-            /**
-             * Otherwise, the update was successful
-             */
+            else {
+                /**
+                 * Otherwise, the update was successful
+                 */
                 Toast.makeText(this, getString(R.string.editor_update_product_successful), Toast.LENGTH_SHORT).show();
+                /**
+                 * Exit activity
+                 */
+                finish();
+            }
         }
     }
 
@@ -305,10 +310,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                  * Save product to db
                  */
                 saveProduct();
-                /**
-                 * Exit activity
-                 */
-                finish();
                 return true;
             case R.id.action_order:
                 /**
