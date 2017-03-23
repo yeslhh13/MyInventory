@@ -95,7 +95,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     private final int MY_PERMISSION_REQUEST = 100;
 
-    private boolean permissionCheckedForCamera;
+    private boolean permissionCheckedForCamera, permissionCheckedForStorage;
 
     /**
      * OnTouchListener that listens for any user touches on a View, implying that they are modifying the view
@@ -549,7 +549,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
              */
             checkPermission();
 
-            if (permissionCheckedForCamera) {
+            if (permissionCheckedForCamera && permissionCheckedForStorage) {
                 Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
             }
@@ -606,6 +606,11 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         else
             permissionCheckedForCamera = false;
 
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+            permissionCheckedForStorage = true;
+        else
+            permissionCheckedForStorage = false;
+
         if (checkSelfPermission((Manifest.permission.WRITE_EXTERNAL_STORAGE)) != PackageManager.PERMISSION_GRANTED ||
                 checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
 
@@ -619,6 +624,22 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == MY_PERMISSION_REQUEST) {
+            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                permissionCheckedForStorage = false;
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this).setMessage(getString(R.string.permission_storage))
+                        .setNeutralButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+
+                builder.create().show();
+            } else {
+                permissionCheckedForStorage = true;
+            }
+
             if (grantResults[1] != PackageManager.PERMISSION_GRANTED) {
                 permissionCheckedForCamera = false;
 
